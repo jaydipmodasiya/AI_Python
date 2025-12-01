@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Medico Bazzar — AI Chatbot</title>
+    <style>
+      :root {
+        --bg: #f5f9ff;
+        --card: #ffffff;
+        --primary: #0b63d6;
+        --muted: #6b7280;
+        --accent: #0b63d6;
+        --bubble-user: #e6f0ff;
+        --bubble-bot: #f1f5fb;
+        --radius: 14px;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI",
+          Roboto, "Helvetica Neue", Arial;
+      }
+
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+        background: linear-gradient(180deg, var(--bg), #eef6ff);
+        color: #0f1724;
+      }
+      .app {
+        max-width: 1100px;
+        margin: 28px auto;
+        display: grid;
+        grid-template-columns: 380px 1fr;
+        gap: 20px;
+        padding: 18px;
+      }
+
+      /* left panel */
+      .panel {
+        background: var(--card);
+        border-radius: 16px;
+        padding: 18px;
+        box-shadow: 0 6px 18px rgba(11, 99, 214, 0.08);
+        height: calc(100vh - 120px);
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      .brand {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+      }
+      .logo {
+        width: 56px;
+        height: 56px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, var(--primary), #3aa0ff);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 700;
+        font-size: 20px;
+        box-shadow: 0 4px 10px rgba(11, 99, 214, 0.18);
+      }
+      .brand h1 {
+        margin: 0;
+        font-size: 18px;
+        color: var(--primary);
+      }
+      .brand p {
+        margin: 0;
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .intro {
+        font-size: 13px;
+        color: #334155;
+        line-height: 1.4;
+      }
+      .quick-list {
+        margin-top: 6px;
+        overflow: auto;
+        padding-right: 6px;
+      }
+      .qbtn {
+        display: inline-block;
+        background: linear-gradient(180deg, #fff, #f1f8ff);
+        border: 1px solid #e6f3ff;
+        padding: 8px 10px;
+        border-radius: 10px;
+        margin: 6px 6px 0 0;
+        font-size: 13px;
+        color: #0b63d6;
+        cursor: pointer;
+        box-shadow: 0 2px 6px rgba(11, 99, 214, 0.04);
+      }
+      .qbtn:hover {
+        transform: translateY(-2px);
+        transition: all 0.15s ease;
+      }
+
+      .meta {
+        margin-top: auto;
+        font-size: 12px;
+        color: var(--muted);
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .meta b {
+        color: #0b63d6;
+      }
+
+      /* right: chat area */
+      .chat-wrap {
+        background: var(--card);
+        border-radius: 16px;
+        padding: 12px;
+        box-shadow: 0 6px 18px rgba(11, 99, 214, 0.06);
+        height: calc(100vh - 120px);
+        display: flex;
+        flex-direction: column;
+      }
+      .chat-head {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 8px;
+        border-bottom: 1px solid #eef2ff;
+      }
+      .chat-head h2 {
+        margin: 0;
+        font-size: 16px;
+        color: var(--primary);
+      }
+      .chat-head p {
+        margin: 0;
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .messages {
+        flex: 1;
+        overflow: auto;
+        padding: 18px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        background: linear-gradient(
+          180deg,
+          rgba(11, 99, 214, 0.02) 0%,
+          transparent 40%
+        );
+        border-radius: 12px;
+      }
+
+      .bubble {
+        max-width: 78%;
+        padding: 12px 14px;
+        border-radius: 14px;
+        line-height: 1.45;
+        font-size: 14px;
+        box-shadow: 0 6px 12px rgba(2, 6, 23, 0.04);
+      }
+      .bubble.user {
+        align-self: flex-end;
+        background: var(--bubble-user);
+        border-bottom-right-radius: 6px;
+        color: #04204b;
+      }
+      .bubble.bot {
+        align-self: flex-start;
+        background: var(--bubble-bot);
+        border-bottom-left-radius: 6px;
+        color: #062042;
+      }
+
+      .meta-small {
+        font-size: 11px;
+        color: var(--muted);
+        margin-top: 6px;
+      }
+
+      .typing {
+        height: 26px;
+        display: inline-block;
+        vertical-align: middle;
+      }
+      .dot {
+        display: inline-block;
+        background: #c7dcff;
+        width: 6px;
+        height: 6px;
+        margin-right: 4px;
+        border-radius: 50%;
+        animation: bounce 1s infinite;
+      }
+      .dot:nth-child(2) {
+        animation-delay: 0.15s;
+      }
+      .dot:nth-child(3) {
+        animation-delay: 0.3s;
+      }
+      @keyframes bounce {
+        0% {
+          transform: translateY(0);
+          opacity: 0.35;
+        }
+        50% {
+          transform: translateY(-6px);
+          opacity: 1;
+        }
+        100% {
+          transform: translateY(0);
+          opacity: 0.35;
+        }
+      }
+
+      .composer {
+        display: flex;
+        gap: 8px;
+        padding: 12px;
+        border-top: 1px solid #eef2ff;
+        align-items: center;
+      }
+      .input {
+        flex: 1;
+        padding: 12px 14px;
+        border-radius: 12px;
+        border: 1px solid #e6f3ff;
+        background: white;
+        font-size: 14px;
+      }
+      .send {
+        background: var(--accent);
+        color: white;
+        padding: 10px 14px;
+        border-radius: 12px;
+        border: none;
+        cursor: pointer;
+        font-weight: 600;
+      }
+      .send:active {
+        transform: translateY(1px);
+      }
+
+      .note {
+        font-size: 12px;
+        color: var(--muted);
+        text-align: center;
+        margin-top: 8px;
+      }
+
+      /* responsive */
+      @media (max-width: 980px) {
+        .app {
+          grid-template-columns: 1fr;
+          padding: 12px;
+        }
+        .panel {
+          height: auto;
+          order: 2;
+        }
+        .chat-wrap {
+          order: 1;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app" role="main">
+      <!-- LEFT PANEL -->
+      <aside class="panel" aria-label="Quick questions & info">
+        <div class="brand">
+          <div
+            class="logo"
+            aria-hidden="true"
+            style="
+              background: none;
+              padding: 0;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+            "
+          >
+            <img
+              src="assets/logo.jpeg"
+              alt="Medico Bazzar Logo"
+              style="
+                width: 56px;
+                height: 56px;
+                border-radius: 12px;
+                object-fit: cover;
+                box-shadow: 0 4px 10px rgba(11, 99, 214, 0.18);
+              "
+            />
+          </div>
+
+          <div>
+            <h1>Medico Bazzar</h1>
+            <p>AI Chat — Patient Support</p>
+          </div>
+        </div>
+
+        <div class="intro">
+          Hi! I’m <strong>MB Assist</strong>, the Medico Bazzar chatbot. Ask
+          about hospitals, bookings, visas, telemedicine, or our AI features.
+          Use the quick questions below to start fast.
+        </div>
+
+        <div class="quick-list" id="quickList" aria-label="Quick questions">
+          <!-- buttons added by JS -->
+        </div>
+
+        <div class="meta">
+          <div><strong>Theme:</strong> Blue/White — Medico Bazzar</div>
+          <div><strong>Email:</strong> ayushhjani@gmail.com</div>
+        </div>
+      </aside>
+
+      <!-- RIGHT: CHAT -->
+      <section class="chat-wrap" aria-live="polite">
+        <div class="chat-head">
+          <div style="display: flex; align-items: center; gap: 10px">
+            <svg
+              width="36"
+              height="36"
+              viewBox="0 0 24 24"
+              fill="none"
+              aria-hidden="true"
+            >
+              <rect x="1" y="3" width="22" height="14" rx="3" fill="#0b63d6" />
+              <path
+                d="M4 21c1.5-2 4-3 8-3s6.5 1 8 3"
+                stroke="#0b63d6"
+                stroke-width="1.2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                fill="white"
+              />
+            </svg>
+          </div>
+          <div>
+            <h2>MB Assist</h2>
+            <p class="meta-small">
+              24/7 AI assistant for Medico Bazzar — instant answers & booking
+              help
+            </p>
+          </div>
+        </div>
+
+        <div
+          class="messages"
+          id="messages"
+          role="log"
+          aria-live="polite"
+          aria-atomic="false"
+        >
+          <!-- initial bot message -->
+          <div>
+            <div class="bubble bot" id="welcomeBubble">
+              Hello! 👋 I’m MB Assist. I can help you find hospitals, schedule
+              appointments, explain costs, assist with visas & travel, and
+              connect you with telemedicine. Try a quick question below or type
+              your query.
+            </div>
+          </div>
+        </div>
+
+        <div class="composer" role="region" aria-label="Chat composer">
+          <input
+            id="userInput"
+            class="input"
+            placeholder="Type your question or click a suggested question..."
+            aria-label="Message input"
+          />
+          <button id="sendBtn" class="send" aria-label="Send message">
+            Send
+          </button>
+        </div>
+
+        <div class="note">
+          This is a demo chatbot prototype. For live bookings, contact our
+          support.
+        </div>
+      </section>
+    </div>
+
+    <script>
+      /*
+  Single-file demo chatbot.
+  - FAKE_AI_RESPONSES: edit responses here
+  - Quick questions: the clickable buttons on the left
+  - Behavior: clicking question or sending triggers bot reply with typing delay
+*/
+
+      const FAKE_AI_RESPONSES = {
+        // 25 tailored Q&A for Medico Bazzar
+        "What services does Medico Bazzar offer?":
+          "Medico Bazzar is an end-to-end medical tourism & healthcare platform: search and compare hospitals, book doctors/appointments, manage travel & visas, and get aftercare and telemedicine follow-ups.",
+        "How do I search for hospitals?":
+          "Use our search by condition, treatment, or city. Filter by accreditation, patient reviews, cost range, and facility amenities to find verified hospitals.",
+        "Can I compare hospitals and treatment packages?":
+          "Yes — Medico Bazzar provides side-by-side comparisons of cost estimates, doctor ratings, facility features, and success rates for treatments.",
+        "Do you help with visas and travel arrangements?":
+          "Absolutely. We provide visa guidance, travel planning, booking assistance, and local pickup services for international patients.",
+        "How much does a typical surgery cost?":
+          "Costs vary by treatment and hospital. Use our cost estimator (or contact support) for a personalized estimate; we also provide price transparency in each package.",
+        "Can I consult a doctor online before traveling?":
+          "Yes. We offer telemedicine/online consultations so you can talk to a specialist before making travel plans.",
+        "Are hospitals verified on your platform?":
+          "All partner hospitals are verified and accredited. Each listing shows accreditation details, certifications, and patient reviews.",
+        "How do I book an appointment?":
+          "Select your hospital and doctor, choose a suitable date/time, then complete booking via our secure portal. We will guide travel and pre-admission steps afterwards.",
+        "What about aftercare and follow-up?":
+          "After treatment, we provide telemedicine follow-ups, local aftercare coordination, post-op reports, and reminders to ensure recovery goes smoothly.",
+        "Is there a refund or cancellation policy?":
+          "Cancellation and refund policies are shown per package/hospital. We aim to be transparent — contact support for case-specific assistance.",
+        "How secure is my medical data?":
+          "Patient data is encrypted. We plan secure storage and optional blockchain-based records for integrity. We follow strict privacy practices.",
+        "Do you have multilingual support?":
+          "Yes — we provide multilingual support (including translation services for international patients) through our local coordinators and chat assistance.",
+        "Can you connect me to a specialist for second opinions?":
+          "Yes. Request a second opinion and we will arrange a teleconsultation with a vetted specialist in the appropriate field.",
+        "What payment methods are accepted?":
+          "We accept major credit/debit cards, net-banking, UPI (India), and bank transfer; international payment options and installment plans may be available.",
+        "Can you help me with insurance claims?":
+          "We assist with documentation for insurance claims, and can coordinate with insurers in many cases — but exact coverage depends on your insurer.",
+        "Do you provide package deals for international patients?":
+          "Yes. We offer bundled packages (treatment+travel+stay) for international patients with clear pricing and included services.",
+        "How long before my scheduled surgery should I arrive?":
+          "We recommend arriving at least 2–3 days before major procedures to complete tests, consult the team, and manage any admin tasks.",
+        "How do I check doctor credentials and reviews?":
+          "Each doctor profile shows qualifications, experience, verified certifications, and patient reviews/ratings for transparency.",
+        "Can Medico Bazzar prioritize urgent cases?":
+          "Yes — we offer a triage system to prioritize urgent medical cases and expedite appointments where possible.",
+        "How does the AI recommendation work?":
+          "Our AI matches your profile (age, condition, budget, location) to hospital & doctor options using historical outcomes and user preferences to suggest best matches.",
+        "Is telemedicine available after I return home?":
+          "Yes — telemedicine follow-ups are available so patients can consult their treating physician remotely after returning home.",
+        "What documents are required for treatment abroad?":
+          "Typically: passport, ID, medical reports, previous test results, and visa documents. We provide a checklist specific to your destination and hospital.",
+        "Do you support local transportation and accommodation?":
+          "We coordinate airport pickup, local transfers, and vetted hotel bookings near the hospital for patient and attendant convenience.",
+        "How do I report a problem or emergency?":
+          "Contact our 24/7 support via WhatsApp or phone. Emergency contacts are provided within each hospital listing for urgent assistance.",
+        "Can I view success rates or case studies on the platform?":
+          "Yes — we publish aggregated success metrics and case studies for major procedures so you can make informed decisions.",
+      };
+
+      // create ordered list of 25 quick questions (keys of FAKE_AI_RESPONSES)
+      const QUICK_QS = Object.keys(FAKE_AI_RESPONSES);
+
+      // DOM refs
+      const messages = document.getElementById("messages");
+      const userInput = document.getElementById("userInput");
+      const sendBtn = document.getElementById("sendBtn");
+      const quickList = document.getElementById("quickList");
+
+      // populate quick questions as buttons
+      QUICK_QS.forEach((q) => {
+        const b = document.createElement("button");
+        b.className = "qbtn";
+        b.textContent = q;
+        b.title = q;
+        b.onclick = () => {
+          sendMessage(q);
+        };
+        quickList.appendChild(b);
+      });
+
+      // helper to append bubble
+      function appendBubble(text, who = "bot") {
+        const wrap = document.createElement("div");
+        const bubble = document.createElement("div");
+        bubble.className = "bubble " + (who === "user" ? "user" : "bot");
+        bubble.innerHTML = text.replace(/\n/g, "<br>");
+        wrap.appendChild(bubble);
+        messages.appendChild(wrap);
+        messages.scrollTop = messages.scrollHeight;
+      }
+
+      // tiny utility: show typing indicator
+      function showTyping() {
+        const t = document.createElement("div");
+        t.className = "bubble bot typingWrap";
+        t.id = "typing";
+        t.innerHTML =
+          '<span class="typing"><span class="dot"></span><span class="dot"></span><span class="dot"></span></span> MB Assist is typing...';
+        messages.appendChild(t);
+        messages.scrollTop = messages.scrollHeight;
+      }
+
+      // remove typing
+      function removeTyping() {
+        const t = document.getElementById("typing");
+        if (t) t.remove();
+      }
+
+      // main send
+      function sendMessage(text) {
+        if (!text || !text.trim()) return;
+        // add user bubble
+        appendBubble(escapeHtml(text), "user");
+        userInput.value = "";
+        // show typing
+        showTyping();
+
+        // simulate processing delay
+        setTimeout(() => {
+          // compute reply
+          const reply = getBotReply(text);
+          removeTyping();
+          appendBubble(reply, "bot");
+        }, 700 + Math.random() * 900);
+      }
+
+      function getBotReply(text) {
+        // simple exact-match lookup (case-insensitive)
+        const key = Object.keys(FAKE_AI_RESPONSES).find(
+          (k) => k.toLowerCase() === text.toLowerCase()
+        );
+        if (key) return FAKE_AI_RESPONSES[key];
+
+        // fuzzy search: find best matching question
+        const lowered = text.toLowerCase();
+        let best = null;
+        let bestScore = 0;
+        Object.keys(FAKE_AI_RESPONSES).forEach((k) => {
+          const kLower = k.toLowerCase();
+          // crude scoring: count shared words
+          const words = kLower.split(/\W+/).filter(Boolean);
+          const words2 = lowered.split(/\W+/).filter(Boolean);
+          let score = 0;
+          words.forEach((w) => {
+            if (words2.includes(w)) score += 1;
+          });
+          if (score > bestScore) {
+            bestScore = score;
+            best = k;
+          }
+        });
+        if (best && bestScore > 0) {
+          return FAKE_AI_RESPONSES[best];
+        }
+
+        // fallback
+        return "Sorry — I couldn't fully understand that. You can try one of the quick questions, or say 'contact support' to get our phone/WhatsApp details. For bookings, say 'How do I book an appointment?'.";
+      }
+
+      // escape HTML
+      function escapeHtml(str) {
+        return str.replace(/[&<>"']/g, function (m) {
+          return {
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#39;",
+          }[m];
+        });
+      }
+
+      // UI events
+      sendBtn.addEventListener("click", () => sendMessage(userInput.value));
+      userInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" && !e.shiftKey) {
+          e.preventDefault();
+          sendMessage(userInput.value);
+        }
+      });
+
+      // initial helpful suggestions (bot)
+      setTimeout(() => {
+        appendBubble(
+          "Tip: Click any suggested question on the left, or type a message. Try: 'How do I book an appointment?'",
+          "bot"
+        );
+      }, 800);
+    </script>
+  </body>
+</html>
