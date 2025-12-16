@@ -66,8 +66,6 @@ No installation required.
 ## 📞 Contact
 
 **Project:** Medico Bazzar — Healthcare & Medical Tourism Platform  
-📧 Email: ayushhjani@gmail.com  
-📞 Phone: +91 7226909566  
 
 ---
 
